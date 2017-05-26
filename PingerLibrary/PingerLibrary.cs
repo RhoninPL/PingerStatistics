@@ -5,40 +5,41 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
-
+using PingerLibrary;
 namespace PingerLibrary
 {
     public class PingerLibrary
     {
         private string address;
-        public static List<long> pingTimes = new List<long>();
+        //public static List<long> pingTimes = new List<long>();
+        public static PingsList<long> pingTimes;
         public static DateTime startTime;
         public static bool sent;
         public static int failed = 0;
-        private TimeSpan recordTime;
 
         public PingerLibrary(string address = "www.google.pl", TimeSpan? recordTime = null)
         {
             this.address = address != "" ? address : "www.google.pl";
-            recordTime = recordTime ?? TimeSpan.FromMinutes(15);
+
+            pingTimes = new PingsList<long>(1000, recordTime ?? TimeSpan.FromMinutes(15));
         }
 
         public void Run()
         {
             startTime = DateTime.Now;
-            Timer timer = new Timer(5000);
-            timer.Elapsed += async (sender, e) => SendPingAsync(address);
+            Timer timer = new Timer(1000);
+            timer.Elapsed += (sender, e) => SendPingAsync(address);
             timer.Start();
 
             Timer timer2 = new Timer(3000);
-            timer2.Elapsed += async (sender, e) => StartDisplayInfo();
+            timer2.Elapsed += (sender, e) => StartDisplayInfo();
             timer2.Start();
         }
 
         public static void StartDisplayInfo()
         {
             if (sent)
-                Console.WriteLine($"Avg: {Math.Round(pingTimes.Average(), 2)} ms, Time: {(DateTime.Now - startTime).ToString("mm\\:ss")} minutes. Lost: {failed}");
+                Console.WriteLine($"Avg: {Math.Round(pingTimes.Average(), 2)} ms, Time: {(DateTime.Now - startTime).ToString("mm\\:ss")} minutes. Lost: {failed}. Total: {pingTimes.Count}");
         }
 
         public static async void SendPingAsync(string address)
